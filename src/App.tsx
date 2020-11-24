@@ -14,7 +14,7 @@ class Fader {
   }
 }
 
-const PAST_PEEK_COUNT = 2;
+const PAST_PEEK_COUNT = 3;
 
 const sessionKey = `autosave ${new Date()}`;
 
@@ -27,6 +27,25 @@ function App() {
     localStorage.setItem(sessionKey, lines.join("") + inputRef.current?.value);
   }, [lines]);
 
+  const renderedLines: React.ReactNode[] = [];
+  for (
+    let i = Math.max(0, lines.length - PAST_PEEK_COUNT);
+    i < lines.length;
+    i++
+  ) {
+    renderedLines.push(
+      <div
+        key={i}
+        className="line"
+        style={{
+          opacity: (PAST_PEEK_COUNT + i + 1 - lines.length) / PAST_PEEK_COUNT,
+        }}
+      >
+        {lines[i]}
+      </div>
+    );
+  }
+
   return (
     <div
       className="root"
@@ -35,16 +54,7 @@ function App() {
       }}
     >
       <div className="content" ref={contentRef}>
-        {lines
-          .slice(lines.length - PAST_PEEK_COUNT, lines.length)
-          .map((line, idx) => (
-            <div
-              key={idx}
-              style={{ opacity: (idx + 1) / (PAST_PEEK_COUNT + 1) }}
-            >
-              {line}
-            </div>
-          ))}
+        {renderedLines}
         <input
           ref={inputRef}
           autoFocus
@@ -56,7 +66,10 @@ function App() {
               const last = lines[lines.length - 1];
               setLines(lines.slice(0, lines.length - 1));
               target.value = last;
-            } else if (line.length > 40 && line[line.length - 1] === " ") {
+            } else if (
+              e.key === "Enter" ||
+              (line.length > 40 && line[line.length - 1] === " ")
+            ) {
               setLines([...lines, line]);
               target.value = "";
             }
