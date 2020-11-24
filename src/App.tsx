@@ -1,25 +1,40 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
+class Fader {
+  constructor(private ref: React.RefObject<HTMLDivElement>) {}
+  private task?: ReturnType<typeof setTimeout>;
+
+  jog() {
+    if (this.task) clearTimeout(this.task);
+    this.ref.current?.classList.remove("fade");
+    this.task = setTimeout(() => {
+      this.ref.current?.classList.add("fade");
+    }, 2000);
+  }
+}
+
 const PAST_PEEK_COUNT = 2;
 
 const sessionKey = `autosave ${new Date()}`;
 
 function App() {
-  const ref = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const fader = useMemo(() => new Fader(contentRef), [contentRef]);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [lines, setLines] = useState<string[]>([]);
   useEffect(() => {
-    localStorage.setItem(sessionKey, lines.join("") + ref.current?.value);
+    localStorage.setItem(sessionKey, lines.join("") + inputRef.current?.value);
   }, [lines]);
 
   return (
     <div
       className="root"
       onClick={() => {
-        ref.current?.focus();
+        inputRef.current?.focus();
       }}
     >
-      <div className="content">
+      <div className="content" ref={contentRef}>
         {lines
           .slice(lines.length - PAST_PEEK_COUNT, lines.length)
           .map((line, idx) => (
@@ -31,9 +46,10 @@ function App() {
             </div>
           ))}
         <input
-          ref={ref}
+          ref={inputRef}
           autoFocus
           onKeyDown={(e) => {
+            fader.jog();
             const target = e.target as HTMLInputElement;
             const line = target.value;
             if (line.length === 0 && e.key === "Backspace" && lines.length) {
@@ -50,7 +66,9 @@ function App() {
       <button
         className="copy"
         onClick={() => {
-          navigator.clipboard.writeText(lines.join("") + ref.current?.value);
+          navigator.clipboard.writeText(
+            lines.join("") + inputRef.current?.value
+          );
         }}
       >
         📋

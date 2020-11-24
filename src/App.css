@@ -11,6 +11,11 @@
 
 .content {
   width: 700px;
+  transition: filter 2s;
+}
+
+.content.fade {
+  filter: blur(6px);
 }
 
 input {
